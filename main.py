@@ -337,7 +337,7 @@ def main():
 @main.command(name = 'segment')
 @click.option('--filename', default=None, help='Name of image file')
 @click.option('--index', default=None, help='Index of image in dataset')
-@click.option('--show', default=False, help='Show image')
+@click.option('--show', default=True, help='Show image')
 @click.option('--n', default=1, help='Number of images to segments')
 def segment(filename, index, show, n):
     ''' Segments traffic sign from image '''
