@@ -328,7 +328,8 @@ def import_files():
 
 @click.group()
 def main():
-    click.echo('Traffic Sign Recognition\n')
+    '''This is a command line tool for traffic sign detection'''
+    click.secho('Traffic Sign Recognition\n', fg='green', bold=True)
     global data 
     data = import_files()
     pass
@@ -360,7 +361,7 @@ def segment(filename, index, show, n):
                 img, idx = load_image()
         else:
             img, idx = load_image()
-            click.secho('No filename or index specified. Using random image')
+            click.secho('No filename or index specified. Using random image instead')
         predBox,pred = segmentation(img)
         actualBox, actual = actual_box(idx)
         iou = intersection_over_union(predBox, actualBox)
@@ -401,7 +402,6 @@ def accuracy(n, test):
     click.secho(f'Number of segmentation with accuracy >= 80%: {count} out of {len(acc)}', fg='green')
     
     plot_acc(acc, title='Accuracy')
-    click
     
 
 main.add_command(segment)
