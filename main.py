@@ -329,6 +329,7 @@ def import_files():
 @click.group()
 def main():
     '''This is a command line tool for traffic sign detection'''
+    os.system('cls' if os.name == 'nt' else 'clear')
     click.secho('Traffic Sign Recognition\n', fg='green', bold=True)
     global data 
     data = import_files()
@@ -341,7 +342,6 @@ def main():
 @click.option('--n', default=1, help='Number of images to segments')
 def segment(filename, index, show, n):
     ''' Segments traffic sign from image '''
-    
     # if filename is not exist, then return None
     for i in range(n):
         if filename is not None:
