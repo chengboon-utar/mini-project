@@ -250,7 +250,7 @@ def intersection_over_union(pred, actual):
     iou = interArea / float(boxAArea + boxBArea - interArea)
     return iou * 100
 
-def accuracy_test(data, test=False):
+def accuracy_test(data, test=False, show=False):
     acc = []
     time_ms = []
     if test:
@@ -262,20 +262,28 @@ def accuracy_test(data, test=False):
         for i in range(len(filename)):
             start = time.perf_counter()
             img, idx = load_image(filename=filename[i])
-            pred = segmentation(img)[0]
+            pred, segment = segmentation(img)
             time_ms.append((time.perf_counter() - start)*1000)
             actual = actual_box(idx)[0]
             iou = intersection_over_union(pred, actual)
             acc.append(iou)
+            plt.imshow(segment, cmap='gray') if show else None
+            plt.title(f'IOU = {iou:.2f}%') if show else None
+            plt.axis('off') if show else None
+            plt.show()
         return acc, time_ms
     else:
         for i in range(len(data)):
             start = time.perf_counter()
             img, idx = load_image(i)
-            pred = segmentation(img)[0]
+            pred, segment = segmentation(img)
             time_ms.append((time.perf_counter() - start)*1000)
             actual = actual_box(idx)[0]
             iou = intersection_over_union(pred, actual)
+            plt.imshow(segment, cmap='gray') if show else None
+            plt.title(f'IOU = {iou:.2f}%') if show else None
+            plt.axis('off') if show else None
+            plt.show()
             acc.append(iou)
         return acc, time_ms
     
@@ -362,21 +370,23 @@ def segment(filename, index, show, n):
         else:
             img, idx = load_image()
             click.secho('No filename or index specified. Using random image instead')
+        start = time.perf_counter()
         predBox,pred = segmentation(img)
+        time_ms = (time.perf_counter() - start)*1000
         actualBox, actual = actual_box(idx)
         iou = intersection_over_union(predBox, actualBox)
         click.secho(f'Accuracy: {iou}%', fg='green')
+        click.secho(f'Time taken: {time_ms:.2f}ms', fg='green')
         click.secho(f'Image: {data.iloc[idx]["filename"]}', fg='green')
         click.secho(f'Class: {data.iloc[idx]["class"]}', fg='green')
         click.secho(f'Image index: {idx}', fg='green')
         # hstack images and display
         
         if show:
-            cv.putText(actual, f'Actual box', (10, 30), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv.LINE_AA)
-            cv.putText(pred, f'Predicted box   Accuracy: {iou}%', (10, 30), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2, cv.LINE_AA)
             img = np.hstack((cv.cvtColor(actual, cv.COLOR_BGR2RGB), pred))
             plt.figure(figsize=(20, 10))
             plt.imshow(img)
+            plt.title(f'Accuracy = {iou:.2f}%')
             plt.axis('off')
             plt.show()
     
@@ -384,14 +394,12 @@ def segment(filename, index, show, n):
 @main.command(name = 'accuracy')
 @click.option('--n', default=1000, help='Number of images to test')
 @click.option('--test', default=False, help='Test accuracy on test set')
-def accuracy(n, test):
+@click.option('--plot', default=False, help='Plot accuracy')
+@click.option('--show', default=False, help='Show segmented image')
+def accuracy(n, test, plot, show):
     ''' Calculates accuracy of segmentation '''
-    
-    if bool(test) not in [True, False]:
-        click.secho('Invalid argument for test', fg='red')
-        return
-    
-    acc, time_ms = accuracy_test(data[:n], test=test)
+ 
+    acc, time_ms = accuracy_test(data[:n], test=test, show=show)
     click.secho(f'Average accuracy: {np.mean(acc)}%', fg='green')
     
     # counts of accuracy less than 50%
@@ -400,8 +408,12 @@ def accuracy(n, test):
         if i >= 80:
             count += 1
     click.secho(f'Number of segmentation with accuracy >= 80%: {count} out of {len(acc)}', fg='green')
-    
-    plot_acc(acc, title='Accuracy')
+
+    plot_acc(acc, title='Accuracy') if plot else None
+
+@main.command(name = 'test')
+def test():
+    acc, time_ms = accuracy_test(data, test=False, show=True)
     
 
 main.add_command(segment)
